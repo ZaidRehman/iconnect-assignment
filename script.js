@@ -1,25 +1,46 @@
 import readline from "readline";
 import createInventory from "./createInventory.js";
-import { getNextCountry, calculateTranportCharge, isDiscountAvailable } from "./utils.js";
+import {
+  getNextCountry,
+  calculateTranportCharge,
+  isDiscountAvailable,
+  checkIfHighCostCountry
+} from "./utils.js";
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
 const calculatePriceForItem = (inventory, country, passport, item, itemQty) => {
   let price = "OUT_OF_STOCK";
-  if (itemQty < inventory[country][item].quantity) {
+  const nextCountry = getNextCountry(country);
+  const isDiscountEnabled = isDiscountAvailable(passport, nextCountry);
+
+  if (checkIfHighCostCountry(country, item, isDiscountEnabled)) {
+    const country1Qty = itemQty - (itemQty % 10);
+    const country2Qty = itemQty % 10;
+    price =
+      inventory[nextCountry][item].price * country1Qty +
+      calculateTranportCharge(
+        isDiscountAvailable(passport, nextCountry),
+        country1Qty
+      );
+    inventory[nextCountry][item].quantity -= country1Qty;
+    price += inventory[country][item].price * country2Qty;
+    inventory[country][item].quantity -= country2Qty;
+  } else if (itemQty < inventory[country][item].quantity) {
     price = inventory[country][item].price * itemQty;
     inventory[country][item].quantity -= itemQty;
   } else if (
     itemQty <
     inventory.UK[item].quantity + inventory.Germany[item].quantity
   ) {
-    const nextCountry = getNextCountry(country);
     const nextCountryQty = itemQty - inventory[country][item].quantity;
     price =
       inventory[country][item].price * inventory[country][item].quantity +
       inventory[nextCountry][item].price * nextCountryQty;
-    price += calculateTranportCharge(
-      isDiscountAvailable(passport, nextCountry),
-      nextCountryQty
-    );
+    price += calculateTranportCharge(isDiscountEnabled, nextCountryQty);
     inventory[country][item].quantity = 0;
     inventory[nextCountry][item].quantity -= nextCountryQty;
   }
@@ -62,12 +83,8 @@ const calculateTotalPrice = (inputs = []) => {
 };
 
 const main = (index) => {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
   rl.question(`INPUT ${index}: `, function (input) {
-    if(input) {
+    if (input) {
       const { salePrice, inventory } = calculateTotalPrice(input.split(":"));
       console.log(
         `OUTPUT ${index}: ${salePrice}:${inventory["UK"]["Mask"].quantity}:${inventory["Germany"]["Mask"].quantity}:${inventory["UK"]["Gloves"].quantity}:${inventory["Germany"]["Gloves"].quantity}`

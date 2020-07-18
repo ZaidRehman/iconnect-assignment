@@ -1,3 +1,5 @@
+import createInventory from "./createInventory.js";
+
 export const getNextCountry = (country) =>
   (country == "UK" && "Germany") || "UK";
 
@@ -11,4 +13,18 @@ export const getTransportBaseCharge = (isDiscountEnabled) =>
 
 export const calculateTranportCharge = (isDiscountEnabled, qty) => {
   return Math.ceil(qty / 10) * getTransportBaseCharge(isDiscountEnabled);
+};
+
+export const checkIfHighCostCountry = (country, item, isDiscountEnabled) => {
+  const inventory = createInventory();
+  // Checking country with higher price
+  // and then comparing the price difference with relative transportaion cost
+  const highCostCountry = "Germany";
+  const lowCostCountry = "UK";
+  return (
+    country === highCostCountry &&
+    inventory[highCostCountry][item].price -
+      inventory[lowCostCountry][item].price >
+      ((isDiscountEnabled && 32) || 40)
+  );
 };
