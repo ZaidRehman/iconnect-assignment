@@ -1,0 +1,13 @@
+{
+  "name": "practice",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "mian": "script.js",
+  "scripts": {
+    "start": "node script.js",
+    "test": "echo testing"
+  },
+  "author": "",
+  "license": "ISC"
+}
