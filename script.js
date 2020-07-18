@@ -1,27 +1,8 @@
-import createInventory from "./createInventory.js";
 import readline from "readline";
+import createInventory from "./createInventory.js";
+import { getNextCountry, calculateTranportCharge, isDiscountAvailable } from "./utils.js";
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-const getNextCountry = (country) => (country == "UK" && "Germany") || "UK";
-
-const isDiscountAvailable = (passport, country) =>
-  passport &&
-  ((passport[0] === "B" && country === "UK") ||
-    (passport[0] === "A" && country === "Germany"));
-
-const calculateTranportCharge = (isDiscountEnabled, qty) => {
-  if (isDiscountEnabled) {
-    return Math.ceil(qty / 10) * 320;
-  } else {
-    return Math.ceil(qty / 10) * 400;
-  }
-};
-
-const calculateForItem = (inventory, country, passport, item, itemQty) => {
+const calculatePriceForItem = (inventory, country, passport, item, itemQty) => {
   let price = "OUT_OF_STOCK";
   if (itemQty < inventory[country][item].quantity) {
     price = inventory[country][item].price * itemQty;
@@ -45,7 +26,7 @@ const calculateForItem = (inventory, country, passport, item, itemQty) => {
   return price;
 };
 
-const calculateTotal = (inputs) => {
+const calculateTotalPrice = (inputs = []) => {
   const inventory = createInventory();
   let passport;
   if (inputs.length == 6) {
@@ -53,14 +34,14 @@ const calculateTotal = (inputs) => {
   }
   const [country, item1, item1Qty, item2, item2Qty] = inputs;
 
-  const item1Price = calculateForItem(
+  const item1Price = calculatePriceForItem(
     inventory,
     country,
     passport,
     item1,
     item1Qty
   );
-  const item2Price = calculateForItem(
+  const item2Price = calculatePriceForItem(
     inventory,
     country,
     passport,
@@ -81,11 +62,17 @@ const calculateTotal = (inputs) => {
 };
 
 const main = (index) => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
   rl.question(`INPUT ${index}: `, function (input) {
-    const { salePrice, inventory } = calculateTotal(input.split(":"));
-    console.log(
-      `OUTPUT ${index}: ${salePrice}:${inventory["UK"]["Mask"].quantity}:${inventory["Germany"]["Mask"].quantity}:${inventory["UK"]["Gloves"].quantity}:${inventory["Germany"]["Gloves"].quantity}`
-    );
+    if(input) {
+      const { salePrice, inventory } = calculateTotalPrice(input.split(":"));
+      console.log(
+        `OUTPUT ${index}: ${salePrice}:${inventory["UK"]["Mask"].quantity}:${inventory["Germany"]["Mask"].quantity}:${inventory["UK"]["Gloves"].quantity}:${inventory["Germany"]["Gloves"].quantity}`
+      );
+    }
     main(++index);
   });
 };
