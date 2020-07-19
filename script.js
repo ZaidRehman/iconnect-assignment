@@ -4,7 +4,7 @@ import {
   getNextCountry,
   calculateTranportCharge,
   isDiscountAvailable,
-  checkIfHighCostCountry
+  checkIfHighCostCountry,
 } from "./utils.js";
 
 const rl = readline.createInterface({
@@ -19,16 +19,32 @@ const calculatePriceForItem = (inventory, country, passport, item, itemQty) => {
 
   if (checkIfHighCostCountry(country, item, isDiscountEnabled)) {
     const country1Qty = itemQty - (itemQty % 10);
-    const country2Qty = itemQty % 10;
-    price =
-      inventory[nextCountry][item].price * country1Qty +
-      calculateTranportCharge(
-        isDiscountAvailable(passport, nextCountry),
-        country1Qty
-      );
-    inventory[nextCountry][item].quantity -= country1Qty;
-    price += inventory[country][item].price * country2Qty;
-    inventory[country][item].quantity -= country2Qty;
+    let country2Qty = itemQty % 10;
+    if (country1Qty < inventory[nextCountry][item].quantity) {
+      price =
+        inventory[nextCountry][item].price * country1Qty +
+        calculateTranportCharge(
+          isDiscountAvailable(passport, nextCountry),
+          country1Qty
+        );
+      inventory[nextCountry][item].quantity -= country1Qty;
+    } else {
+      price =
+        inventory[nextCountry][item].price *
+          inventory[nextCountry][item].quantity +
+        calculateTranportCharge(
+          isDiscountAvailable(passport, nextCountry),
+          country1Qty
+        );
+      country2Qty += country1Qty - inventory[nextCountry][item].quantity;
+      inventory[nextCountry][item].quantity = 0;
+    }
+    if (country2Qty < inventory[country][item].quantity) {
+      price += inventory[country][item].price * country2Qty;
+      inventory[country][item].quantity -= country2Qty;
+    } else {
+      return "OUT_OF_STOCK";
+    }
   } else if (itemQty < inventory[country][item].quantity) {
     price = inventory[country][item].price * itemQty;
     inventory[country][item].quantity -= itemQty;
